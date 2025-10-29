@@ -1,0 +1,22 @@
+# Auto detect text files and perform LF normalization
+* text=auto
+
+# Python files
+*.py text eol=lf
+
+# Shell scripts
+*.sh text eol=lf
+
+# Markdown files
+*.md text eol=lf
+
+# Configuration files
+*.ini text eol=lf
+*.yaml text eol=lf
+*.yml text eol=lf
+
+# Ensure model files are treated as binary (don't modify)
+*.pth binary
+*.pkl binary
+*.npy binary
+

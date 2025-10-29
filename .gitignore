@@ -1,0 +1,64 @@
+# Python
+*.py[cod]
+*.pyc
+__pycache__/
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+
+# Virtual environments
+bin/
+lib/
+include/
+pyvenv.cfg
+.Python
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+pip-log.txt
+
+# Model files (large binaries)
+benchmarks/LRS3/language_models/lm_en_subword/
+benchmarks/LRS3/models/LRS3_V_WER19.1/
+
+# Output directories (generated files at runtime)
+uploads/*
+!uploads/.gitkeep
+tts/*
+!tts/.gitkeep
+transcription_*.txt
+
+# Test video files in root (but allow in test_data folder)
+*.mp4
+*.mov
+*.avi
+*.mkv
+*.webm
+!test_data/**/*.mp4
+!test_data/**/*.mov
+!test_data/**/*.avi
+!test_data/**/*.mkv
+!test_data/**/*.webm
+!benchmarks/**/*.mp4
+
+# Webcam output files
+webcam*.mp4
