@@ -201,7 +201,22 @@ def create_app(config_path: Optional[str] = None) -> Flask:
             if not corrected:
                 corrected = "No speech detected"
 
-            return render_template("index.html", transcript=corrected, error=None, translated=None, tts_path=None)
+            # Generate TTS for the transcript (English)
+            tts_rel = None
+            try:
+                from gtts import gTTS
+
+                filename = f"tts_{uuid.uuid4().hex}.mp3"
+                out_path = os.path.join(TTS_DIR, filename)
+                tts = gTTS(text=corrected, lang='en')
+                tts.save(out_path)
+                tts_rel = filename
+            except Exception as e:
+                # Continue without audio if TTS fails
+                pass
+
+            tts_url = url_for("serve_tts", filename=tts_rel) if tts_rel else None
+            return render_template("index.html", transcript=corrected, error=None, translated=None, tts_path=tts_url)
         except Exception as e:
             return render_template("index.html", transcript=None, error=str(e), translated=None, tts_path=None)
         finally:
@@ -224,14 +239,15 @@ def create_app(config_path: Optional[str] = None) -> Flask:
 
     @app.route("/translate", methods=["POST"])  # type: ignore[misc]
     def translate():
-        # Expect original corrected transcript and target language code
+        # Expect original corrected transcript, target language code, and transcript audio
         text = request.form.get("transcript", "").strip()
         target = request.form.get("target", "").strip()
+        transcript_tts = request.form.get("transcript_tts", "").strip()
 
         if not text:
             return render_template("index.html", transcript=None, translated=None, tts_path=None, error="No transcript to translate.")
         if target not in {"te", "hi", "ta", "ml"}:
-            return render_template("index.html", transcript=text, translated=None, tts_path=None, error="Unsupported language.")
+            return render_template("index.html", transcript=text, translated=None, tts_path=transcript_tts, error="Unsupported language.")
 
         # Map to human name and gTTS language codes
         lang_map = {
@@ -268,10 +284,10 @@ def create_app(config_path: Optional[str] = None) -> Flask:
             out = TranslationOut.model_validate_json(resp.message.content)
             translated = (out.translated_text or "").strip()
         except Exception as e:
-            return render_template("index.html", transcript=text, translated=None, tts_path=None, error=f"Translation failed: {e}")
+            return render_template("index.html", transcript=text, translated=None, tts_path=transcript_tts, error=f"Translation failed: {e}")
 
         if not translated:
-            return render_template("index.html", transcript=text, translated=None, tts_path=None, error="Empty translation.")
+            return render_template("index.html", transcript=text, translated=None, tts_path=transcript_tts, error="Empty translation.")
 
         # Generate TTS using gTTS
         tts_rel = None
@@ -285,9 +301,10 @@ def create_app(config_path: Optional[str] = None) -> Flask:
             tts_rel = filename
         except Exception as e:
             # Continue without audio if TTS fails
-            return render_template("index.html", transcript=text, translated=translated, tts_path=None, error=f"TTS failed: {e}")
+            return render_template("index.html", transcript=text, translated=translated, tts_path=transcript_tts, error=f"TTS failed: {e}")
 
-        return render_template("index.html", transcript=text, translated=translated, tts_path=url_for("serve_tts", filename=tts_rel), error=None)
+        translation_audio_url = url_for("serve_tts", filename=tts_rel) if tts_rel else None
+        return render_template("index.html", transcript=text, translated=translated, tts_path=transcript_tts, translation_tts_path=translation_audio_url, error=None)
 
     @app.route("/tts/<path:filename>")  # type: ignore[misc]
     def serve_tts(filename: str):
